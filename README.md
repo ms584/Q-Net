@@ -62,6 +62,8 @@ To provide a proof-of-concept for the "Reality Link" (Layer 2), we developed a 3
 - **Result:** **100% Success Rate.**
 - **Conclusion:** Proves the mathematical and logical soundness of the Q-Net routing and teleportation architecture.
 
+<img width="1889" height="721" alt="Image" src="https://github.com/user-attachments/assets/c158a0a2-acb5-4151-813b-c0fbe3d1a371" />
+
 ### 5.2 IBM Quantum Hardware Execution (`IBM_Quantum/`)
 - **Environment:** `ibm_torino` (Real 133-qubit quantum processor).
 - **Result:** **~51.36% Success Rate.**
