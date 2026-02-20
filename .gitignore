@@ -1,0 +1,52 @@
+# Q-Net Project .gitignore
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python & Compiled Files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.log
+
+# Virtual Environments
+env/
+venv/
+.venv/
+.env
+env.bak/
+venv.bak/
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+.history/
+*.swp
+*.swo
+
+# IBM Quantum & Security (CRITICAL)
+# Ignore files that might contain your IBM API Token
+# or Qiskit credentials to prevent leaking them.
+.env
+token.txt
+ibm-credentials.env
+qiskitrc
+*.json
+secret*
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# ----------------------------
+# Exclude Specific Simulation Outputs (Optional)
+# ----------------------------
+# Note: Currently, we DO WANT to commit qnet_circuit.png and qnet_histogram.png
+# to show proof of the simulation. So, do NOT ignore *.png in the simulation folder.
+# If you ever want to ignore future test images, you can uncomment the line below:
+# simulation/*.png

@@ -1,0 +1,17 @@
+# Q-Net Project: Python Dependencies for Quantum Teleportation
+# Install via: pip install -r requirements.txt
+
+# Core Qiskit SDK (Version 1.0+ required for new syntax)
+qiskit>=1.0.0
+
+# High-performance simulator framework for local testing
+qiskit-aer>=0.14.0
+
+# IBM Quantum Runtime service for connecting to real QPU hardware
+qiskit-ibm-runtime>=0.22.0
+
+# Plotting library for generating histograms and displaying popups
+matplotlib>=3.7.0
+
+# Required by Qiskit for high-quality Matplotlib circuit rendering
+pylatexenc>=2.10
