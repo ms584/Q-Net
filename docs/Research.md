@@ -17,18 +17,23 @@ The fundamental limit of electromagnetic communication—the speed of light ($c$
 
 ### 2.1 The Light-Speed Limit (The Problem)
 Classical communication is bound by causality. The latency $L$ between two nodes at distance $d$ is given by:
+
 $$ L \ge \frac{d}{c} + T_{proc} $$
+
 Where $c \approx 3 \times 10^8$ m/s. For Earth-Mars communication ($d \approx 2.25 \times 10^{11}$ m), the minimum round-trip time (RTT) is $\approx 24$ minutes. This latency renders real-time control systems (e.g., remote surgery, defense interception) impossible.
 
 ### 2.2 Entanglement & Teleportation (The Solution)
 Q-Net relies on the **Einstein-Podolsky-Rosen (EPR)** paradox. Two qubits, $A$ and $B$, share a maximally entangled Bell state:
+
 $$ |\Phi^+\rangle = \frac{1}{\sqrt{2}} (|0\rangle_A |0\rangle_B + |1\rangle_A |1\rangle_B) $$
 
 Information is transmitted via **Quantum Teleportation**, where the state of a third qubit $|\psi\rangle_C = \alpha|0\rangle + \beta|1\rangle$ is transferred to $B$ using the entangled resource.
 
 ### 2.3 The "Zero-Latency" Mechanism (Theoretical)
 To bypass the No-Communication Theorem (which requires a classical channel), Q-Net hypothesizes a **Non-Linear Collapse Modulation** mechanism. The probability of measuring state $|0\rangle$ is biased by a control field $\mathcal{C}(t)$:
+
 $$ P(0)_{\text{controlled}} = |\langle 0 | \psi \rangle|^2 + \epsilon \cdot \tanh(\mathcal{C}(t)) $$
+
 Where $\epsilon$ is a non-linear coefficient allowing information to be encoded in the collapse statistic itself.
 
 ---
@@ -68,6 +73,7 @@ To validate the **Layer 2 (Reality Link)** protocol, we implemented a 3-qubit te
     - State `0`: 498 counts
     - State `1`: 526 counts
 - **Success Rate:**
+
 $$ F_{exp} = \frac{526}{1024} \approx 51.37\% $$
 
 ### 4.4 Analysis of Hardware Results
