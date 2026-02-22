@@ -15,32 +15,32 @@ The primary goal of **Sprint Alpha - 1** is to establish the foundational archit
 
 To ensure clear ownership and efficient execution, the following roles have been assigned for this sprint:
 
-- **Product Owner / Strategist:** **[ใส่ชื่อคุณ หรือหัวหน้ากลุ่ม]**
+- **Product Owner / Strategist:** **[Sitthichok Moknak 673380428-6]**
   - **Responsibilities:**
     -   Define the overall project vision and ensure alignment with the "Master Research Prompt".
     -   Oversee the creation of all documentation and manage the sprint backlog.
     -   Prepare the "Project Pitch" presentation.
     -   Finalize and submit all sprint deliverables.
 
-- **Quantum Architect:** **[ใส่ชื่อเพื่อนคนที่ 1]**
+- **Quantum Architect:** **[Pattadon Khumnan 673380416-3]**
   - **Responsibilities:**
     -   Lead the design of the 5-layer Q-Net Stack.
     -   Author the primary content for the `Architecture_Spec.MD` document.
     -   Define the functions of each layer and protocol (QIP, QTCP).
 
-- **Software Engineer (Simulation & Hardware):** **[ใส่ชื่อเพื่อนคนที่ 2]**
+- **Software Engineer (Simulation & Hardware):** **[Nattapat Chamtakhu 673380583-4]**
   - **Responsibilities:**
     -   Develop the "Toy Model" simulation for the Quantum Teleportation protocol.
     -   Execute the code on both local simulators and real IBM Quantum hardware (`ibm_torino`).
     -   Generate visualizations (Circuits, Histograms) for the presentation.
 
-- **Network Analyst:** **[ใส่ชื่อเพื่อนคนที่ 3]**
+- **Network Analyst:** **[Sorawit Sukongchareun 673380606-8]**
   - **Responsibilities:**
     -   Research and document the limitations of classical networking (TCP/IP, BGP) in an interplanetary context.
     -   Contribute to the "Problem Statement" and "Civilizational Impact" sections of the main report.
     -   Analyze the decoherence results from the IBM hardware test.
 
-- **Research & Ethics Analyst:** **[ใส่ชื่อเพื่อนคนที่ 4]**
+- **Research & Ethics Analyst:** **[Amonwan Phimphichai 673380608-4]**
   - **Responsibilities:**
     -   Research supporting scientific papers and references for the project.
     -   Analyze the long-term societal and ethical implications (Kardashev Scale, Security Risks).
@@ -61,7 +61,7 @@ This backlog lists all tasks to be completed within Sprint Alpha - 1.
 | **DEV-02**  | Execute Teleportation on real IBM Quantum Hardware (`ibm_torino`). | Software Engineer  | **Done**  |
 | **PRES-01** | Create the `Project Pitch` presentation slides (Canva).        | Research & Ethics Analyst | **Done**  |
 | **RES-01**  | Gather and format all references for the report.             | Research & Ethics Analyst | **Done**  |
-| **SUB-01**  | Consolidate all documents and submit for the 22/02 deadline. | Product Owner          | **Pending** |
+| **SUB-01**  | Consolidate all documents and submit for the 22/02 deadline. | Product Owner          | **Done** |
 
 ---
 

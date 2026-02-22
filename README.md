@@ -69,6 +69,8 @@ To provide a proof-of-concept for the "Reality Link" (Layer 2), we developed a 3
 - **Result:** **~51.36% Success Rate.**
 - **Academic Insight:** The drop in success rate on real hardware is expected due to **Quantum Noise and Decoherence** (Thermal Relaxation) during the mid-circuit measurement delay. This real-world limitation experimentally proves exactly *why* Q-Net's **Layer 1 (Phononic Memory)** and **Layer 4 (State Consistency/Error Correction)** are absolutely required for the network to function in reality.
 
+*For detailed circuit architecture and implementation specifications, refer to docs/Architecture_Spec.md.*
+
 ### 5.3 How to Run
 1. **Install Prerequisites:**
    ```bash
