@@ -1,0 +1,281 @@
+"""
+Q-Net Project: Layer 2 (Reality Link) Proof of Concept
+Quantum Teleportation on IBM Quantum Hardware (Runtime V2)
+
+Better Run On Colab or Jupyter for visualization and to avoid issues with interactive matplotlib in VS Code.
+
+"""
+
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+import matplotlib.pyplot as plt
+
+import numpy as np
+from itertools import product
+
+
+def _get_counts_from_runtime_result(result):
+    """Safely extract counts from Runtime V2 PrimitiveResult."""
+    databin = result[0].data
+    if hasattr(databin, "meas"):
+        return databin.meas.get_counts()
+    field = list(databin.__dict__.values())[0]
+    return field.get_counts()
+
+
+def _format_key(bits, with_spaces=True):
+    """bits is an iterable like (b, a0, a1)."""
+    s = "".join(str(x) for x in bits)
+    return " ".join(s) if with_spaces else s
+
+
+def _parse_counts_to_tuple3(raw_counts):
+    """
+    Convert raw_counts -> dict[(m0,m1,m2)] = count
+    where:
+      m0 = Bob (q2)
+      m1 = Alice(q0)
+      m2 = Alice(q1)
+
+    Assumption: Qiskit displays classical bits big-endian as m2 m1 m0 in the string.
+      string 'abc' -> (m0=c, m1=b, m2=a)
+    """
+    parsed = {}
+    for k, v in raw_counts.items():
+        ks = str(k).replace(" ", "")
+        if len(ks) != 3:
+            continue
+        m2, m1, m0 = int(ks[0]), int(ks[1]), int(ks[2])
+        parsed[(m0, m1, m2)] = parsed.get((m0, m1, m2), 0) + v
+    return parsed
+
+
+def _apply_postprocess_x_correction(parsed_tuple3):
+    """
+    Apply teleportation correction:
+      b_corr = b ^ a1  (a1 is Alice(q1) == m2)
+    Return dict['b_corr a0 a1'] counts with spaces.
+    """
+    corrected = {}
+    for (b, a0, a1), v in parsed_tuple3.items():
+        b_corr = b ^ a1
+        key = _format_key((b_corr, a0, a1), with_spaces=True)
+        corrected[key] = corrected.get(key, 0) + v
+    return corrected
+
+
+# ---------- Manual measurement mitigation (3-qubit) ----------
+
+def _build_readout_calibration_circuits():
+    """
+    Build 8 calibration circuits for states 000–111
+    Using the SAME measurement mapping as main circuit:
+      measure q2->m0, q0->m1, q1->m2  (so counts string still displays as m2 m1 m0)
+    """
+    circuits = []
+    labels = []  # ideal prepared bitstrings in logical order (q0 q1 q2)
+
+    for bits in product([0, 1], repeat=3):  # bits = (q0,q1,q2)
+        qr = QuantumRegister(3, "q")
+        m = ClassicalRegister(3, "m")
+        qc = QuantumCircuit(qr, m)
+
+        if bits[0] == 1:
+            qc.x(0)
+        if bits[1] == 1:
+            qc.x(1)
+        if bits[2] == 1:
+            qc.x(2)
+
+        qc.measure(2, m[0])  # q2 -> m0
+        qc.measure(0, m[1])  # q0 -> m1
+        qc.measure(1, m[2])  # q1 -> m2
+
+        circuits.append(qc)
+        labels.append(bits)
+
+    return circuits, labels
+
+
+def _mitigate_counts_3bit(raw_counts, backend, shots, optimization_level=1):
+    """
+    Build confusion matrix (8x8) and apply pseudo-inverse to mitigate raw_counts.
+    Returns mitigated_counts in the SAME key-style as raw_counts (bitstrings of length 3),
+    as floats.
+    """
+    print("\n--- Running Manual Readout Calibration (8 states) ---")
+
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    sampler = Sampler(mode=backend)
+
+    cal_circuits, cal_labels = _build_readout_calibration_circuits()
+
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=optimization_level)
+    cal_isa = [pm.run(c) for c in cal_circuits]
+
+    cal_job = sampler.run(cal_isa, shots=shots)
+    print("Calibration Job ID:", cal_job.job_id())
+    cal_result = cal_job.result()
+
+    # Confusion matrix M where:
+    #   M[measured, prepared] = P(measured | prepared)
+    # We'll index bitstrings as integer of displayed string "m2 m1 m0" without spaces.
+    M = np.zeros((8, 8), dtype=float)
+
+    for j, _bits in enumerate(cal_labels):
+        # Each pub result (index j)
+        pub_res = cal_result[j]
+        # pub_res is SamplerPubResult-like; wrap into list for our extractor pattern
+        counts_j = _get_counts_from_runtime_result([pub_res])
+
+        for k, v in counts_j.items():
+            ks = str(k).replace(" ", "")
+            if len(ks) != 3:
+                continue
+            meas_idx = int(ks, 2)  # measured in display order m2 m1 m0
+            M[meas_idx, j] += v
+
+    # Normalize columns by shots
+    M = M / float(shots)
+
+    # Pseudo-inverse (more stable than inverse if matrix is ill-conditioned)
+    Minv = np.linalg.pinv(M)
+
+    # Raw vector y
+    y = np.zeros(8, dtype=float)
+    for k, v in raw_counts.items():
+        ks = str(k).replace(" ", "")
+        if len(ks) != 3:
+            continue
+        y[int(ks, 2)] += v
+
+    # Mitigated x ≈ Minv * y
+    x = Minv @ y
+
+    # Clip negatives (can happen)
+    x = np.clip(x, 0.0, None)
+
+    # Repack back to counts dict (keep same display style "a b c" if you want; here no spaces first)
+    mitigated = {}
+    for i, val in enumerate(x):
+        if val <= 0:
+            continue
+        ks = format(i, "03b")       # string "m2m1m0"
+        mitigated[ks] = float(val)  # keep no spaces for now
+
+    return mitigated
+
+
+def run_qnet_teleportation_ibm_postprocess_with_mitigation(
+    backend_name="ibm_fez",
+    shots=100000,
+    optimization_level=1
+):
+    print("--- Initializing Q-Net Teleportation Protocol ---")
+
+    # 1) Registers
+    qr = QuantumRegister(3, name="q")
+    m = ClassicalRegister(3, name="m")  # m0=Bob(q2), m1=Alice(q0), m2=Alice(q1)
+    qc = QuantumCircuit(qr, m)
+
+    # 2) Prepare payload |1> on q0
+    print("1. Preparing payload state: |1> at Node A")
+    qc.x(0)
+    qc.barrier()
+
+    # 3) Create entanglement q1-q2
+    print("2. Generating Entanglement Fabric between Node A and Node B")
+    qc.h(1)
+    qc.cx(1, 2)
+    qc.barrier()
+
+    # 4) Teleportation core
+    print("3. Executing Reality Link (Collapse Control) at Node A")
+    qc.cx(0, 1)
+    qc.h(0)
+    qc.barrier()
+
+    # No if_test on QPU
+    print("4. Reconstructing State at Node B (Post-processing correction)")
+
+    # 5) Measure at end
+    print("5. Measuring final state at Node B...")
+    qc.measure(2, m[0])  # Bob
+    qc.measure(0, m[1])  # Alice q0
+    qc.measure(1, m[2])  # Alice q1
+
+    # --- Execution on IBM Quantum hardware ---
+    print("\n--- Running on IBM Quantum Hardware ---")
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    backend = service.backend(backend_name)
+    print("Using backend:", backend.name)
+
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=optimization_level)
+    isa_circuit = pm.run(qc)
+
+    sampler = Sampler(mode=backend)
+
+    # 1) Run teleportation circuit
+    job = sampler.run([isa_circuit], shots=shots)
+    print("Job ID:", job.job_id())
+    result = job.result()
+    raw_counts = _get_counts_from_runtime_result(result)
+
+    # 2) Manual measurement mitigation on raw_counts (3-bit)
+    mitigated_raw = _mitigate_counts_3bit(
+        raw_counts=raw_counts,
+        backend=backend,
+        shots=shots,
+        optimization_level=optimization_level
+    )
+
+    # 3) Parse mitigated counts into tuple3 (m0,m1,m2)
+    # mitigated_raw keys are 'm2m1m0' without spaces; we convert to parsed tuple as before
+    parsed_mitigated = {}
+    for k, v in mitigated_raw.items():
+        ks = str(k).replace(" ", "")
+        if len(ks) != 3:
+            continue
+        m2, m1, m0 = int(ks[0]), int(ks[1]), int(ks[2])
+        parsed_mitigated[(m0, m1, m2)] = parsed_mitigated.get((m0, m1, m2), 0.0) + float(v)
+
+    # 4) Post-processing teleportation correction (X depends on a1=m2)
+    corrected_counts = _apply_postprocess_x_correction(parsed_mitigated)
+
+    # --- Print output in simulator-like style ---
+    print(f"\nHardware Results ({shots} shots): {corrected_counts}")
+    print("Note: The key reading is the furthest left bit (Bob's Result).")
+    print("Since we sent '1', results should mostly start with '1' (e.g., '1 0 0', '1 0 1', '1 1 0', '1 1 1')")
+
+    success = sum(v for k, v in corrected_counts.items() if str(k).startswith("1"))
+    total = sum(corrected_counts.values())  # use mitigated total (float)
+    success_rate = success / total * 100
+    print(f"\nTeleportation Success Rate: {success_rate:.2f}%\n")
+
+    # --- Visualizations (no pylatexenc) ---
+    print("Generating visualizations...")
+
+    print("\nCircuit:")
+    print(qc.draw(output="text"))
+
+    labels = list(corrected_counts.keys())
+    values = list(corrected_counts.values())
+    plt.figure()
+    plt.bar(labels, values)
+    plt.xlabel("Measurement Result (Bob Alice0 Alice1)")
+    plt.ylabel("Counts (mitigated)")
+    plt.title("Q-Net Teleportation Results (IBM Hardware, mitigated + post-processed)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    return job.job_id(), corrected_counts
+
+
+if __name__ == "__main__":
+    run_qnet_teleportation_ibm_postprocess_with_mitigation(
+        backend_name="ibm_fez",
+        shots=100000,
+        optimization_level=1
+    )
