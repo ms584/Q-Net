@@ -1,0 +1,334 @@
+"""
+Q-Net Project: Layer 2 (Reality Link) Proof of Concept
+Quantum Teleportation on IBM Quantum Hardware (Runtime V2)
+
+- Static circuit on QPU (no real-time if_test feed-forward)
+- Classical correction in post-processing (X depends on Alice q1)
+- Manual measurement mitigation via 8-state calibration (3-qubit)
+- IMPORTANT: counts string order is proven by probes to be: q2 q1 q0
+- Output format kept similar to simulator: keys like '1 0 0' (Bob is leftmost bit)
+
+Better Run On Colab or Jupyter for visualization and to avoid issues with interactive matplotlib in VS Code.
+"""
+
+from itertools import product
+import numpy as np
+import matplotlib.pyplot as plt
+
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+
+
+# -------------------- helpers: runtime counts --------------------
+
+def _get_counts_from_runtime_result(result):
+    """Safely extract counts from Runtime V2 PrimitiveResult."""
+    databin = result[0].data
+    if hasattr(databin, "meas"):
+        return databin.meas.get_counts()
+    field = list(databin.__dict__.values())[0]
+    return field.get_counts()
+
+
+def _clean_key3(k):
+    """Return 3-bit string with no spaces, like '010'."""
+    return str(k).replace(" ", "")
+
+
+# -------------------- layout helpers (FIX for TranspileLayout) --------------------
+
+def _get_phys_layout_q0q1q2(isa_circuit, qr):
+    """
+    Return [phys(q0), phys(q1), phys(q2)] as ints.
+
+    Works with Qiskit 2.x where isa_circuit.layout is a TranspileLayout.
+    Preferred: isa_circuit.layout.initial_layout.get_virtual_bits()
+
+    Fallbacks included so it doesn't break across minor versions.
+    """
+    layout = getattr(isa_circuit, "layout", None)
+    if layout is None:
+        raise RuntimeError("No layout found on transpiled circuit (isa_circuit.layout is None).")
+
+    # Most reliable in Qiskit 2.x
+    init_layout = getattr(layout, "initial_layout", None)
+    if init_layout is not None and hasattr(init_layout, "get_virtual_bits"):
+        v2p = init_layout.get_virtual_bits()  # dict[Qubit] -> physical index (int)
+        return [int(v2p[qr[i]]) for i in range(3)]
+
+    # Older-style fallback
+    if hasattr(layout, "get_virtual_bits"):
+        v2p = layout.get_virtual_bits()
+        return [int(v2p[qr[i]]) for i in range(3)]
+
+    # Last resort: try final_layout if exists
+    final_layout = getattr(layout, "final_layout", None)
+    if final_layout is not None and hasattr(final_layout, "get_virtual_bits"):
+        v2p = final_layout.get_virtual_bits()
+        return [int(v2p[qr[i]]) for i in range(3)]
+
+    raise RuntimeError("Could not extract virtual->physical mapping from TranspileLayout.")
+
+
+# -------------------- teleport: build circuit --------------------
+
+def _build_teleport_circuit_static():
+    """
+    Build teleport circuit with final measurements only (static).
+
+    Measurement mapping (logical order):
+      qc.measure(q0 -> m0)
+      qc.measure(q1 -> m1)
+      qc.measure(q2 -> m2)
+
+    But Qiskit prints counts as m2 m1 m0 == q2 q1 q0 (proven by probes).
+    """
+    qr = QuantumRegister(3, name="q")
+    m = ClassicalRegister(3, name="m")
+    qc = QuantumCircuit(qr, m)
+
+    # payload |1> on q0
+    qc.x(0)
+    qc.barrier()
+
+    # entanglement between q1 and q2
+    qc.h(1)
+    qc.cx(1, 2)
+    qc.barrier()
+
+    # Alice ops
+    qc.cx(0, 1)
+    qc.h(0)
+    qc.barrier()
+
+    # final measurement (logical order)
+    qc.measure(0, m[0])  # q0
+    qc.measure(1, m[1])  # q1
+    qc.measure(2, m[2])  # q2 (Bob)
+
+    return qc, qr
+
+
+# -------------------- postprocess correction --------------------
+
+def _postprocess_from_mitigated_q0q1q2(mitigated_q0q1q2_counts):
+    """
+    Input: dict with keys 'q0q1q2' (3-bit str), values float.
+    Teleport correction in Z basis:
+      Bob = q2, Alice1 = q1 -> X correction => b_corr = q2 ^ q1
+      Alice0 = q0 (kept in key)
+    Output keys: 'b a0 a1' == 'b q0 q1' with spaces.
+    """
+    out = {}
+    for k, v in mitigated_q0q1q2_counts.items():
+        s = _clean_key3(k)
+        if len(s) != 3:
+            continue
+        q0, q1, q2 = int(s[0]), int(s[1]), int(s[2])
+        b_corr = q2 ^ q1
+        key = f"{b_corr} {q0} {q1}"
+        out[key] = out.get(key, 0.0) + float(v)
+    return out
+
+
+# -------------------- mitigation: 8-state calibration --------------------
+
+def _build_calibration_circuits_logical_order():
+    """
+    Build 8 circuits preparing |q0 q1 q2> for all 000..111.
+    Measurement mapping same as teleport circuit:
+      measure q0->m0, q1->m1, q2->m2
+
+    Backend DISPLAY is q2 q1 q0, so we reverse when indexing.
+    """
+    circuits = []
+    prep_labels_q0q1q2 = []  # strings "q0q1q2"
+
+    for bits in product([0, 1], repeat=3):  # bits=(q0,q1,q2)
+        qc = QuantumCircuit(3, 3)
+        q0, q1, q2 = bits
+
+        if q0: qc.x(0)
+        if q1: qc.x(1)
+        if q2: qc.x(2)
+
+        qc.measure(0, 0)  # q0->m0
+        qc.measure(1, 1)  # q1->m1
+        qc.measure(2, 2)  # q2->m2
+
+        circuits.append(qc)
+        prep_labels_q0q1q2.append(f"{q0}{q1}{q2}")
+
+    return circuits, prep_labels_q0q1q2
+
+
+def _mitigate_counts_manual_3bit(
+    backend,
+    sampler,
+    phys_layout_q0q1q2,
+    raw_counts,
+    cal_shots=2000
+):
+    """
+    Manual mitigation:
+      - Run 8 calibration circuits on SAME physical qubits as teleport circuit
+      - Build confusion matrix M(8x8) in logical basis q0q1q2
+      - Apply pseudo-inverse
+    """
+    print("\n--- Running Manual Readout Calibration (8 states) ---")
+    print("Pinned physical qubits (q0,q1,q2) ->", phys_layout_q0q1q2)
+
+    cal_circuits, prep_labels = _build_calibration_circuits_logical_order()
+
+    # pin to the same physical qubits
+    cal_isa = [
+        transpile(
+            c,
+            backend=backend,
+            initial_layout=phys_layout_q0q1q2,
+            optimization_level=0
+        )
+        for c in cal_circuits
+    ]
+
+    cal_job = sampler.run(cal_isa, shots=cal_shots)
+    print("Calibration Job ID:", cal_job.job_id())
+    cal_result = cal_job.result()
+
+    # confusion matrix
+    M = np.zeros((8, 8), dtype=float)
+
+    for j, _prep in enumerate(prep_labels):
+        pub = cal_result[j]
+        databin = pub.data
+        counts = databin.meas.get_counts() if hasattr(databin, "meas") else list(databin.__dict__.values())[0].get_counts()
+
+        for k, v in counts.items():
+            disp = _clean_key3(k)       # displayed as q2q1q0
+            if len(disp) != 3:
+                continue
+            meas_q0q1q2 = disp[::-1]    # convert -> q0q1q2
+            i = int(meas_q0q1q2, 2)
+            M[i, j] += float(v)
+
+    M = M / float(cal_shots)
+    Minv = np.linalg.pinv(M)
+
+    # observed vector in q0q1q2 basis
+    y = np.zeros(8, dtype=float)
+    for k, v in raw_counts.items():
+        disp = _clean_key3(k)          # q2q1q0
+        if len(disp) != 3:
+            continue
+        q0q1q2 = disp[::-1]
+        y[int(q0q1q2, 2)] += float(v)
+
+    x = Minv @ y
+    x = np.clip(x, 0.0, None)
+
+    # renormalize to preserve total shots
+    total = x.sum()
+    if total > 0:
+        x = x * (y.sum() / total)
+
+    mitigated_q0q1q2 = {}
+    for i, val in enumerate(x):
+        if val > 0:
+            mitigated_q0q1q2[format(i, "03b")] = float(val)
+
+    return mitigated_q0q1q2, cal_job.job_id()
+
+
+# -------------------- main runner --------------------
+
+def run_qnet_teleportation_ibm_mitigated(
+    backend_name="ibm_marrakesh",
+    cal_shots=2000,
+    main_shots=20000,
+    optimization_level=1
+):
+    print("--- Initializing Q-Net Teleportation Protocol ---")
+    print("1. Preparing payload state: |1> at Node A")
+    print("2. Generating Entanglement Fabric between Node A and Node B")
+    print("3. Executing Reality Link (Collapse Control) at Node A")
+    print("4. Reconstructing State at Node B (Post-processing correction)")
+    print("5. Measuring final state at Node B...")
+
+    print("\n--- Running on IBM Quantum Hardware ---")
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    backend = service.backend(backend_name)
+    print("Using backend:", backend.name)
+
+    qc, qr = _build_teleport_circuit_static()
+
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=optimization_level)
+    isa_circuit = pm.run(qc)
+
+    # FIXED: extract physical qubits safely in Qiskit 2.x
+    phys_layout_q0q1q2 = _get_phys_layout_q0q1q2(isa_circuit, qr)
+
+    sampler = Sampler(mode=backend)
+
+    # --- Teleport job ---
+    job = sampler.run([isa_circuit], shots=main_shots)
+    print("Job ID:", job.job_id())
+    result = job.result()
+    raw_counts = _get_counts_from_runtime_result(result)
+
+    # --- Mitigation calibration + apply ---
+    mitigated_q0q1q2, cal_job_id = _mitigate_counts_manual_3bit(
+        backend=backend,
+        sampler=sampler,
+        phys_layout_q0q1q2=phys_layout_q0q1q2,
+        raw_counts=raw_counts,
+        cal_shots=cal_shots
+    )
+
+    # --- Postprocess correction (X using Alice q1) ---
+    corrected_counts = _postprocess_from_mitigated_q0q1q2(mitigated_q0q1q2)
+
+    print(f"\nHardware Results ({main_shots} shots): {corrected_counts}")
+    print("Note: The key reading is the furthest left bit (Bob's Result).")
+    print("Since we sent '1', results should mostly start with '1' (e.g., '1 0 0', '1 0 1', '1 1 0', '1 1 1')")
+
+    success = sum(v for k, v in corrected_counts.items() if str(k).startswith("1"))
+    total = sum(corrected_counts.values())
+    success_rate = (success / total * 100) if total > 0 else 0.0
+    print(f"\nTeleportation Success Rate: {success_rate:.2f}%\n")
+
+    print("Generating visualizations...")
+
+    print("\nCircuit:")
+    print(qc.draw(output="text"))
+
+    labels = list(corrected_counts.keys())
+    values = list(corrected_counts.values())
+    plt.figure()
+    plt.bar(labels, values)
+    plt.xlabel("Measurement Result (Bob Alice0 Alice1)")
+    plt.ylabel("Counts (mitigated)")
+    plt.title("Q-Net Teleportation Results (IBM Hardware, mitigated + post-processed)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    return {
+        "backend": backend_name,
+        "teleport_job_id": job.job_id(),
+        "cal_job_id": cal_job_id,
+        "phys_layout_q0q1q2": phys_layout_q0q1q2,
+        "raw_counts": raw_counts,
+        "mitigated_q0q1q2": mitigated_q0q1q2,
+        "corrected_counts": corrected_counts,
+        "success_rate": success_rate,
+    }
+
+
+if __name__ == "__main__":
+    run_qnet_teleportation_ibm_mitigated(
+        backend_name="ibm_marrakesh",
+        cal_shots=2000,
+        main_shots=20000,
+        optimization_level=1
+    )
