@@ -6,6 +6,7 @@
 ![Hardware](https://img.shields.io/badge/Hardware-IBM%20Quantum%20Tested-blueviolet)
 ![Peak Fidelity](https://img.shields.io/badge/Peak%20Fidelity-99.09%25-gold)
 ![Sprints](https://img.shields.io/badge/Sprints-4%20%2F%204%20Complete-brightgreen)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19065067.svg)](https://doi.org/10.5281/zenodo.19065067)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
 ![Qiskit](https://img.shields.io/badge/Qiskit-1.0.2-6929C4?logo=ibm)
@@ -275,8 +276,9 @@ If you use this work in your research or coursework, please cite:
                Phimphichai, Amonwan},
   title     = {{Q-Net: Quantum Entanglement-Based Post-Internet Architecture}},
   year      = {2026},
-  publisher = {GitHub},
-  url       = {https://github.com/ms584/Q-NET},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.19065067},
+  url       = {https://doi.org/10.5281/zenodo.19065067},
   note      = {CP352005 Computer Networks,
                College of Computing, Khon Kaen University.
                Peak teleportation fidelity: 99.09\% on ibm\_marrakesh}

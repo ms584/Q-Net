@@ -26,8 +26,9 @@ authors:
   - family-names: "Phimphichai"
     given-names: "Amonwan"
     affiliation: "College of Computing, Khon Kaen University"
-repository-code: "https://github.com/YOUR_USERNAME/Q-NET"
+repository-code: "https://github.com/ms584/Q-Net"
 url: "https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing"
+doi: "10.5281/zenodo.19065067"
 license: MIT
 version: "1.0.0"
 date-released: "2026-03-17"
