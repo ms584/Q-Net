@@ -6,16 +6,29 @@
 ![Hardware](https://img.shields.io/badge/Hardware-IBM%20Quantum%20Tested-blueviolet)
 ![Peak Fidelity](https://img.shields.io/badge/Peak%20Fidelity-99.09%25-gold)
 ![Sprints](https://img.shields.io/badge/Sprints-4%20%2F%204%20Complete-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
+![Qiskit](https://img.shields.io/badge/Qiskit-1.0.2-6929C4?logo=ibm)
+![IBM Quantum](https://img.shields.io/badge/IBM%20Quantum-Heron%20r1-6929C4?logo=ibm)
+![Colab](https://img.shields.io/badge/Notebook-Open%20in%20Colab-F9AB00?logo=googlecolab&logoColor=white)
+![Course](https://img.shields.io/badge/Course-CP352005%20Networks-informational)
+![University](https://img.shields.io/badge/KKU-College%20of%20Computing-darkred)
 
 > **"Bridging the cosmic silence through quantum state teleportation."**
+
+---
+
+> [!IMPORTANT]
+> **Q-Net does not achieve faster-than-light communication.**
+> Both entanglement pre-distribution and classical correction channels remain bounded by *c*.
+> Q-Net's advantage is the **elimination of connection-establishment overhead** (SYN/SYN-ACK/ACK),
+> saving 6–44 minutes of setup time per session in Earth–Mars scenarios — not superluminal signaling.
 
 ---
 
 ## 1. Project Description
 
 **Q-Net** is a conceptual framework for a post-Internet communication architecture designed to overcome the fundamental light-speed latency limitations of classical networks. It proposes a radical shift from electromagnetic packet switching (TCP/IP) to **Quantum State Teleportation**, enabling pre-distributed entanglement-based communication for an interplanetary civilization.
-
-> ⚠️ **Note:** Q-Net does not achieve faster-than-light communication. Both entanglement pre-distribution and classical correction channels remain bounded by *c*. Q-Net's advantage is the elimination of connection-establishment overhead (SYN/SYN-ACK/ACK), saving 6–44 minutes of setup time per session in Earth–Mars scenarios.
 
 This repository contains the full architectural specification, agile implementation plans, and Python-based quantum teleportation circuits validated across **34 test attempts** on **3 real IBM Quantum backends** over **4 development sprints**, achieving a peak fidelity of **99.09%**.
 
@@ -43,7 +56,23 @@ Classical networking protocols fail at the interplanetary scale due to fundament
 
 ---
 
-## 4. Architecture Overview
+## 4. Known Limitations
+
+> [!WARNING]
+> **Scale:** All experiments were conducted at **3-qubit scale**. Production quantum networks require thousands to millions of logical qubits with full quantum error correction. Our results demonstrate protocol feasibility, not network scalability.
+
+> [!WARNING]
+> **Single-Hop Only:** Fidelity degrades multiplicatively with entanglement swapping hops (F_net ≈ F₁ × F₂). Our 97–99% single-hop fidelity would be significantly lower at multi-hop scale without quantum error correction.
+
+> [!WARNING]
+> **No Planetary-Scale Distribution:** No experiment has demonstrated sustained entanglement distribution beyond LEO satellite experiments (Micius satellite, ~1,200 km). Earth-Mars entanglement distribution (56–401 million km) requires breakthroughs not yet demonstrated.
+
+> [!NOTE]
+> **Sprint 3 Failure (v2b):** Readout error mitigation via confusion matrix inversion **failed catastrophically** (~49.6%) due to matrix ill-conditioning (κ(M) ≈ 47.3) and hardware drift. This is documented as a scientific finding supporting Probabilistic Error Cancellation (PEC) over matrix inversion for NISQ hardware.
+
+---
+
+## 5. Architecture Overview
 
 Q-Net replaces the traditional OSI model with a 5-layer stack dedicated to quantum state manipulation.
 
@@ -59,17 +88,17 @@ Q-Net replaces the traditional OSI model with a 5-layer stack dedicated to quant
 
 ---
 
-## 5. Implementation & Proof of Concept
+## 6. Implementation & Proof of Concept
 
 ### 🔗 Full Test Run Notebook (Colab)
 
-> **[▶ Open Full Test Run on Google Colab](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)**
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)
 
 All 34 test attempts across 4 sprints — including circuit code, raw results, and the summary analysis cell.
 
 ---
 
-### 5.1 Local Simulation (`simulation/`)
+### 6.1 Local Simulation (`simulation/`)
 
 - **Environment:** `AerSimulator` (ideal, noise-free)
 - **Result:** **100% Success Rate**
@@ -79,9 +108,7 @@ All 34 test attempts across 4 sprints — including circuit code, raw results, a
 
 ---
 
-### 5.2 IBM Quantum Hardware — 4-Sprint Development
-
-The hardware implementation was developed across 4 sprints, each introducing a key architectural improvement.
+### 6.2 IBM Quantum Hardware — 4-Sprint Development
 
 #### Sprint Summary
 
@@ -143,76 +170,64 @@ The hardware implementation was developed across 4 sprints, each introducing a k
 
 ---
 
-### 5.3 Sprint 3 Failure Analysis (v2b)
-
-The readout error mitigation attempt (confusion matrix inversion) is the most scientifically informative result in the project.
-
-- **Condition number κ(M) ≈ 47.3** — shot noise amplified 47× under inversion
-- **Calibration drift ~8–12%** over 2.1-hour window — invalidated the noise model
-- **Result:** ~49.6% — indistinguishable from random output
-
-> This finding supports using **Probabilistic Error Cancellation (PEC)** over matrix inversion for NISQ readout correction in future Q-Net implementations.
-
----
-
-### 5.4 How to Run
+### 6.3 How to Run
 
 1. **Install Prerequisites:**
    ```bash
    pip install -r requirements.txt
    ```
-
 2. **Run Local Simulation:**
    ```bash
    python simulation/teleport_simulation.py
    ```
-
 3. **Run on IBM Hardware** *(Requires IBM Quantum API token):*
    ```bash
    python IBM_Quantum/teleport_test_on_ibm_quantum.py
    ```
-
-4. **View Full Test Run & Summary:**  
-   [▶ Google Colab Notebook](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)
+4. **View Full Test Run & Summary:**
+   [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)
 
 ---
 
-## 6. Repository Structure
+## 7. Repository Structure
 
 ```text
 Q-NET/
 │
 ├── README.md                        # This file
-├── requirements.txt                 # Python dependencies (Qiskit 1.0.2, Runtime 0.20.0)
+├── LICENSE                          # MIT License
+├── CITATION.cff                     # Citation metadata (GitHub "Cite this repo" button)
+├── CONTRIBUTING.md                  # How to contribute
+├── requirements.txt                 # Python dependencies
 │
 ├── docs/
-│   ├── Architecture_Spec.MD         # 5-layer Q-Net protocol stack
-│   ├── Implementation_Plan.MD       # 4-sprint roadmap
-│   └── Sprint_Plan.MD               # All sprint backlogs, results, lessons learned
+│   ├── Architecture_Spec.MD
+│   ├── Implementation_Plan.MD
+│   └── Sprint_Plan.MD
 │
 ├── sprint-alpha/
-│   ├── ibm_quantum/                 # Sprint 1 hardware execution (v1)
-│   ├── simulation/                  # Local AerSimulator test
-│   └── Research.md                  # Sprint 1 research notes
+│   ├── ibm_quantum/                 # Sprint 1 — v1 hardware execution
+│   ├── simulation/                  # AerSimulator test
+│   └── Research.md
 │
 ├── sprint-beta/
-│   ├── ibm_quantum/                 # Sprint 2 hardware execution (v2)
-│   └── Research.md                  # Sprint 2 research notes
+│   ├── ibm_quantum/                 # Sprint 2 — v2 hardware execution
+│   └── Research.md
 │
 ├── sprint-gamma/
-│   ├── ibm_quantum/                 # Sprint 3 hardware execution (v2b + v3)
-│   └── Research.md                  # Sprint 3 research notes (incl. failure analysis)
+│   ├── ibm_quantum/                 # Sprint 3 — v2b (failed) + v3
+│   └── Research.md
 │
 ├── sprint-delta/
-│   ├── ibm_quantum/                 # Sprint 4 hardware execution (v3 on ibm_marrakesh)
-│   └── Research.md                  # Sprint 4 research notes + paper writing plan
+│   ├── ibm_quantum/                 # Sprint 4 — v3 on ibm_marrakesh
+│   └── Research.md
 │
 └── .gitignore
 ```
 
 ---
 
-## 7. Experimental Environment
+## 8. Experimental Environment
 
 | Parameter | Value |
 |-----------|-------|
@@ -225,11 +240,11 @@ Q-NET/
 
 ---
 
-## 8. Team & Contributors
+## 9. Team & Contributors
 
 | Role | Name | Student ID |
 |------|------|-----------|
-| Product Owner / Strategist | Sitthichok Moknak | 673380428-6 |
+| Product Owner / Strategist ⭐ | Sitthichok Moknak | 673380428-6 |
 | Quantum Architect | Pattadon Khumnan | 673380416-3 |
 | Software Engineer | Nattaphat Chamtakhu | 673380583-4 |
 | Network Analyst | Sorawit Sukongchareun | 673380606-8 |
@@ -237,15 +252,66 @@ Q-NET/
 
 ---
 
-## 9. Academic Paper
+## 10. Academic Paper
 
 This repository supports the paper:
 
-> **"Q-Net: Quantum Entanglement-Based Post-Internet Architecture — Hardware Implementation and Teleportation Fidelity Analysis on IBM Quantum Systems"**  
-> Pattadon Khumnan, Sitthichok Moknak, Nattaphat Chamtakhu, Sorawit Sukongchareun, Amonwan Phimphichai  
+> **"Q-Net: Quantum Entanglement-Based Post-Internet Architecture — Hardware Implementation and Teleportation Fidelity Analysis on IBM Quantum Systems"**
+> Pattadon Khumnan, Sitthichok Moknak, Nattaphat Chamtakhu, Sorawit Sukongchareun, Amonwan Phimphichai
 > CP352005 Computer Networks | College of Computing, Khon Kaen University | March 2026
 
 ---
 
-*This project was developed as part of the CP352005 Computer Networks course.*  
+## 11. Citation
+
+If you use this work in your research or coursework, please cite:
+
+```bibtex
+@software{qnet2026,
+  author    = {Moknak, Sitthichok and
+               Khumnan, Pattadon and
+               Chamtakhu, Nattaphat and
+               Sukongchareun, Sorawit and
+               Phimphichai, Amonwan},
+  title     = {{Q-Net: Quantum Entanglement-Based Post-Internet Architecture}},
+  year      = {2026},
+  publisher = {GitHub},
+  url       = {https://github.com/YOUR_USERNAME/Q-NET},
+  note      = {CP352005 Computer Networks,
+               College of Computing, Khon Kaen University.
+               Peak teleportation fidelity: 99.09\% on ibm\_marrakesh}
+}
+```
+
+> You can also use the **"Cite this repository"** button on the GitHub sidebar,
+> powered by [`CITATION.cff`](./CITATION.cff).
+
+---
+
+## 12. Acknowledgements
+
+We gratefully acknowledge:
+
+- **[IBM Quantum](https://quantum.ibm.com)** — for free cloud access to ibm_torino, ibm_fez, and ibm_marrakesh (Heron r1 processors) through the IBM Quantum Network.
+- **[Qiskit Community](https://github.com/Qiskit)** — for the open-source framework that made this empirical work possible.
+- **College of Computing, Khon Kaen University** — for academic resources and support.
+- **CP352005 Computer Networks Instructor** — for the course structure that motivated the Q-Net concept and iterative sprint methodology.
+- **Bennett et al. (1993)** and **Bouwmeester et al. (1997)** — whose foundational quantum teleportation work this project builds upon.
+
+---
+
+## 13. Contributing
+
+Contributions, new backend experiments, and bug reports are welcome!
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for full guidelines.
+
+---
+
+## 14. License
+
+This project is licensed under the **MIT License** — see [`LICENSE`](./LICENSE) for details.
+
+---
+
+*Developed as part of CP352005 Computer Networks | College of Computing, Khon Kaen University*
 *Corresponding: sitthichok.m@kkumail.com*
