@@ -1,0 +1,148 @@
+"""
+Q-Net Project: Layer 2 (Reality Link) Proof of Concept
+Quantum Teleportation on IBM Quantum Hardware (Runtime V2)
+Hardware-friendly: no real-time if_test feed-forward on QPU.
+We do classical correction in post-processing to boost success rate.
+Output format kept similar to simulator (keys like '1 0 0'; Bob is leftmost bit).
+
+Run this on IBM Quantum hardware with a backend that supports Runtime V2 (e.g., ibm_fez).
+Better Run On Colab or Jupyter for visualization and to avoid issues with interactive matplotlib in VS Code.
+"""
+
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+import matplotlib.pyplot as plt
+
+
+def _get_counts_from_runtime_result(result):
+    """Safely extract counts from Runtime V2 PrimitiveResult."""
+    databin = result[0].data
+    if hasattr(databin, "meas"):
+        return databin.meas.get_counts()
+    # fallback: take first BitArray field
+    field = list(databin.__dict__.values())[0]
+    return field.get_counts()
+
+
+def _format_key(bits, with_spaces=True):
+    """bits is an iterable like (b, a0, a1)."""
+    s = "".join(str(x) for x in bits)
+    return " ".join(s) if with_spaces else s
+
+
+def run_qnet_teleportation_ibm_postprocess(backend_name="ibm_fez", shots=100000):
+    print("--- Initializing Q-Net Teleportation Protocol ---")
+
+    # 1) Registers
+    qr = QuantumRegister(3, name="q")
+
+    # ใช้ classical register เดียว 3 บิต เพื่อคุมลำดับบิตเอง
+    # เราจะเก็บเป็น: m[0]=Bob, m[1]=Alice(q0), m[2]=Alice(q1)
+    m = ClassicalRegister(3, name="m")
+
+    qc = QuantumCircuit(qr, m)
+
+    # 2) Prepare payload |1> at Node A (q0)
+    print("1. Preparing payload state: |1> at Node A")
+    qc.x(0)
+    qc.barrier()
+
+    # 3) Create entanglement between Node A and Node B (q1<->q2)
+    print("2. Generating Entanglement Fabric between Node A and Node B")
+    qc.h(1)
+    qc.cx(1, 2)
+    qc.barrier()
+
+    # 4) Teleportation (Alice operations)
+    print("3. Executing Reality Link (Collapse Control) at Node A")
+    qc.cx(0, 1)
+    qc.h(0)
+    qc.barrier()
+
+    # ไม่ทำ if_test บน QPU (เอาออกเพื่อให้ฮาร์ดแวร์ทำงานเสถียรกว่า)
+    print("4. Reconstructing State at Node B (Post-processing correction)")
+
+    # 5) Measure at the end (static circuit)
+    print("5. Measuring final state at Node B...")
+    # map: Bob(q2)->m0, Alice q0->m1, Alice q1->m2
+    qc.measure(2, m[0])
+    qc.measure(0, m[1])
+    qc.measure(1, m[2])
+
+    # --- Execution on IBM Quantum hardware ---
+    print("\n--- Running on IBM Quantum Hardware ---")
+    service = QiskitRuntimeService(channel="ibm_cloud")
+    backend = service.backend(backend_name)
+    print("Using backend:", backend.name)
+
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=1)
+    isa_circuit = pm.run(qc)
+
+    sampler = Sampler(mode=backend)
+    job = sampler.run([isa_circuit], shots=shots)
+    print("Job ID:", job.job_id())
+
+    result = job.result()
+    raw_counts = _get_counts_from_runtime_result(result)
+
+    # --- Normalize raw_counts keys to a consistent (b, a0, a1) tuple ---
+    # raw_counts keys can be strings like '010' or '0 1 0' depending on environment.
+    # We'll parse them robustly.
+    parsed_raw = {}
+    for k, v in raw_counts.items():
+        ks = str(k).replace(" ", "")
+        # Expect 3 bits: m2 m1 m0 or m0 m1 m2? Qiskit count-string ordering can vary.
+        # To avoid guessing, we will reconstruct by sampling a single shot is hard here.
+        # Practical workaround: assume the string corresponds to classical register "m" in big-endian,
+        # where leftmost is m[2] and rightmost is m[0]. This is the common display convention.
+        # So ks = (m2 m1 m0). We want (m0, m1, m2) = (ks[2], ks[1], ks[0]).
+        if len(ks) != 3:
+            continue
+        m2, m1, m0 = int(ks[0]), int(ks[1]), int(ks[2])
+        parsed_raw[(m0, m1, m2)] = parsed_raw.get((m0, m1, m2), 0) + v
+
+    # --- Post-processing correction ---
+    # Teleportation corrections:
+    # - If Alice second bit (c2 / q1-meas) == 1 -> apply X on Bob => flips measurement bit.
+    # - If Alice first bit (c1 / q0-meas) == 1 -> apply Z on Bob => does NOT change Z-basis measurement.
+    #
+    # Here: Alice bits are (a0 = m1 from q0, a1 = m2 from q1).
+    # X correction depends on a1 (q1 measurement).
+    corrected_counts = {}
+    for (b, a0, a1), v in parsed_raw.items():
+        b_corr = b ^ a1  # apply X correction in post-processing
+        key = _format_key((b_corr, a0, a1), with_spaces=True)
+        corrected_counts[key] = corrected_counts.get(key, 0) + v
+
+    # --- Print output in simulator-like style ---
+    print(f"\nHardware Results ({shots} shots): {corrected_counts}")
+    print("Note: The key reading is the furthest left bit (Bob's Result).")
+    print("Since we sent '1', results should mostly start with '1' (e.g., '1 0 0', '1 0 1', '1 1 0', '1 1 1')")
+
+    success = sum(v for k, v in corrected_counts.items() if str(k).startswith("1"))
+    success_rate = success / shots * 100
+    print(f"\nTeleportation Success Rate: {success_rate:.2f}%\n")
+
+    # --- Visualizations (no pylatexenc) ---
+    print("Generating visualizations...")
+
+    print("\nCircuit:")
+    print(qc.draw(output="text"))
+
+    labels = list(corrected_counts.keys())
+    values = list(corrected_counts.values())
+    plt.figure()
+    plt.bar(labels, values)
+    plt.xlabel("Measurement Result (Bob Alice0 Alice1)")
+    plt.ylabel("Counts")
+    plt.title("Q-Net Teleportation Results (IBM Hardware, post-processed)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+    return job.job_id(), corrected_counts
+
+
+if __name__ == "__main__":
+    run_qnet_teleportation_ibm_postprocess(backend_name="ibm_fez", shots=100000)
