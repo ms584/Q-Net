@@ -276,7 +276,7 @@ If you use this work in your research or coursework, please cite:
   title     = {{Q-Net: Quantum Entanglement-Based Post-Internet Architecture}},
   year      = {2026},
   publisher = {GitHub},
-  url       = {https://github.com/YOUR_USERNAME/Q-NET},
+  url       = {https://github.com/ms584/Q-NET},
   note      = {CP352005 Computer Networks,
                College of Computing, Khon Kaen University.
                Peak teleportation fidelity: 99.09\% on ibm\_marrakesh}
