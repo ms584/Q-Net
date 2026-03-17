@@ -1,0 +1,69 @@
+cff-version: 1.2.0
+message: "If you use this software or research in your work, please cite it as below."
+type: software
+title: "Q-Net: Quantum Entanglement-Based Post-Internet Architecture"
+abstract: >
+  Q-Net is a conceptual framework and empirical proof-of-concept for a
+  post-Internet communication architecture based on quantum state teleportation.
+  This repository documents a 4-sprint hardware implementation on IBM Quantum
+  systems (ibm_torino, ibm_fez, ibm_marrakesh), achieving a peak teleportation
+  fidelity of 99.09% through iterative architectural improvements including
+  static circuit design and hardware-aware transpilation.
+authors:
+  - family-names: "Moknak"
+    given-names: "Sitthichok"
+    email: "sitthichok.m@kkumail.com"
+    affiliation: "College of Computing, Khon Kaen University"
+  - family-names: "Khumnan"
+    given-names: "Pattadon"
+    affiliation: "College of Computing, Khon Kaen University"
+  - family-names: "Chamtakhu"
+    given-names: "Nattaphat"
+    affiliation: "College of Computing, Khon Kaen University"
+  - family-names: "Sukongchareun"
+    given-names: "Sorawit"
+    affiliation: "College of Computing, Khon Kaen University"
+  - family-names: "Phimphichai"
+    given-names: "Amonwan"
+    affiliation: "College of Computing, Khon Kaen University"
+repository-code: "https://github.com/YOUR_USERNAME/Q-NET"
+url: "https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing"
+license: MIT
+version: "1.0.0"
+date-released: "2026-03-17"
+keywords:
+  - quantum teleportation
+  - quantum networking
+  - NISQ hardware
+  - IBM Quantum
+  - quantum internet
+  - interplanetary communication
+  - Qiskit
+institution:
+  name: "College of Computing, Khon Kaen University"
+  country: TH
+references:
+  - type: article
+    title: "Teleporting an unknown quantum state via dual classical and Einstein-Podolsky-Rosen channels"
+    authors:
+      - family-names: "Bennett"
+        given-names: "Charles H."
+    journal: "Physical Review Letters"
+    volume: 70
+    issue: 13
+    year: 1993
+    doi: "10.1103/PhysRevLett.70.1895"
+  - type: article
+    title: "Quantum internet: A vision for the road ahead"
+    authors:
+      - family-names: "Wehner"
+        given-names: "Stephanie"
+      - family-names: "Elkouss"
+        given-names: "David"
+      - family-names: "Hanson"
+        given-names: "Ronald"
+    journal: "Science"
+    volume: 362
+    issue: 6412
+    year: 2018
+    doi: "10.1126/science.aam9288"
