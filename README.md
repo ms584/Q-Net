@@ -27,6 +27,49 @@
 
 ---
 
+## 🔗 Quick Links
+
+| Resource | Link |
+|---------|------|
+| 🌐 **Web Simulator** | [q-net-chunibyou-simulator.onrender.com](https://q-net-chunibyou-simulator.onrender.com/) |
+| 💻 **Simulator Repo** | [Q-Net_Chunibyou_Simulator](https://github.com/ms584/Q-Net_Chunibyou_Simulator) |
+| 📓 **Full Test Run (Colab)** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing) |
+| 📁 **All Project Files (Drive)** | [Google Drive Folder](https://drive.google.com/drive/folders/1hUEy792v2CG3qkvhrA96-JBKnv0aO10f?usp=sharing) |
+| 🎬 **Explainer Video (YouTube)** | [เมื่อ TCP/IP ใช้บนดาวอังคารไม่ได้? รู้จัก Q-Net](https://youtu.be/rN_gJCtLI1k) |
+| 🎵 **Short Video (TikTok)** | [ยุค Interplanetary Civilization มาถึงแล้ว!](https://www.tiktok.com/@sitt.m4/video/7618998544644525328) |
+| 🏷️ **DOI (Zenodo)** | [10.5281/zenodo.19065067](https://doi.org/10.5281/zenodo.19065067) |
+
+---
+
+## 🌐 Live Web Simulator
+
+> **Try Q-Net's teleportation concept interactively — no installation required!**
+
+[![Web Simulator](https://img.shields.io/badge/🚀%20Launch%20Simulator-Live%20Demo-brightgreen?style=for-the-badge)](https://q-net-chunibyou-simulator.onrender.com/)
+
+The **Q-Net Chunibyou Simulator** is a web-based interactive demo that visualizes the quantum teleportation protocol and Q-Net's Layer-2 architecture in an accessible, engaging format.
+
+- **Simulator Repo:** [github.com/ms584/Q-Net_Chunibyou_Simulator](https://github.com/ms584/Q-Net_Chunibyou_Simulator)
+- **Live Demo:** [q-net-chunibyou-simulator.onrender.com](https://q-net-chunibyou-simulator.onrender.com/)
+
+---
+
+## 🎬 Media & Outreach
+
+### YouTube — Full Explainer
+[![YouTube](https://img.shields.io/badge/YouTube-Watch%20Now-FF0000?logo=youtube&logoColor=white)](https://youtu.be/rN_gJCtLI1k)
+
+**"เมื่อ TCP/IP ใช้บนดาวอังคารไม่ได้? รู้จัก Q-Net อนาคตการสื่อสารของมนุษยชาติ"**
+→ [youtu.be/rN_gJCtLI1k](https://youtu.be/rN_gJCtLI1k)
+
+### TikTok — Short Form
+[![TikTok](https://img.shields.io/badge/TikTok-Watch%20Now-000000?logo=tiktok&logoColor=white)](https://www.tiktok.com/@sitt.m4/video/7618998544644525328)
+
+**"ยุค Interplanetary Civilization มาถึงแล้ว! 👨‍🚀 อินเทอร์เน็ตแบบเดิมช้าเกินไปสำหรับจักรวาล?"**
+→ [@sitt.m4](https://www.tiktok.com/@sitt.m4/video/7618998544644525328)
+
+---
+
 ## 1. Project Description
 
 **Q-Net** is a conceptual framework for a post-Internet communication architecture designed to overcome the fundamental light-speed latency limitations of classical networks. It proposes a radical shift from electromagnetic packet switching (TCP/IP) to **Quantum State Teleportation**, enabling pre-distributed entanglement-based communication for an interplanetary civilization.
@@ -90,14 +133,6 @@ Q-Net replaces the traditional OSI model with a 5-layer stack dedicated to quant
 ---
 
 ## 6. Implementation & Proof of Concept
-
-### 🔗 Full Test Run Notebook (Colab)
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)
-
-All 34 test attempts across 4 sprints — including circuit code, raw results, and the summary analysis cell.
-
----
 
 ### 6.1 Local Simulation (`simulation/`)
 
@@ -187,6 +222,9 @@ All 34 test attempts across 4 sprints — including circuit code, raw results, a
    ```
 4. **View Full Test Run & Summary:**
    [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zXrPBkwNGIn2XLGjwUW_jj5L3ldmKCGr?usp=sharing)
+
+5. **Try the Web Simulator:**
+   [q-net-chunibyou-simulator.onrender.com](https://q-net-chunibyou-simulator.onrender.com/)
 
 ---
 
