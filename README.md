@@ -355,3 +355,15 @@ This project is licensed under the **MIT License** — see [`LICENSE`](./LICENSE
 
 *Developed as part of CP352005 Computer Networks | College of Computing, Khon Kaen University*
 *Corresponding: sitthichok.m@kkumail.com*
+
+---
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=ms584%2FQ-Net&type=timeline&logscale=&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=ms584/Q-Net&type=timeline&theme=dark&logscale&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=ms584/Q-Net&type=timeline&logscale&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=ms584/Q-Net&type=timeline&logscale&legend=bottom-right" />
+ </picture>
+</a>
